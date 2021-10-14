@@ -1,6 +1,8 @@
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include "progressbar.hpp"
+#include <ctime>
+#include <iostream>
 
 
 // -o, --output Output bag file
@@ -10,35 +12,14 @@
 // -e, --end_time Skip messages later than end time
 // -h, --help Display this message
 
-std::string stampToString(const ros::Time& stamp, const std::string format="%H:%M")
-{
-  const int output_size = 100;
-  char output[output_size];
-  std::time_t raw_time = static_cast<time_t>(stamp.sec);
-  struct tm* timeinfo = localtime(&raw_time);
-  std::strftime(output, output_size, format.c_str(), timeinfo);
-  return std::string(output);
-}
-
-int removeColon(std::string s)
-{
-  if (s.size() == 4) 
-    s.replace(1, 1, "");
-    
-  if (s.size() == 5) 
-    s.replace(2, 1, "");
-    
-  return stoi(s);
-}
-
 int main(int argc, char *argv[])
 {
   //Defaults************************************
   std::string out_name = "out.bag";
-  std::string compression = "lz4";
+  rosbag::CompressionType compression = rosbag::CompressionType::LZ4 ;
   bool progress = false;
-  int start = 0000; 
-  int end = 2400; 
+  ros::Time start = ros::TIME_MIN; 
+  ros::Time end = ros::TIME_MAX;
   //********************************************
 
   int arg_count = 1;
@@ -54,63 +35,77 @@ int main(int argc, char *argv[])
       std::cout << "-o, --output Output bag file name" << std::endl;
       std::cout << "-c, --compression Compression format: none, lz4 or bz2 (default lz4)" << std::endl;
       std::cout << "-p, --progress Display progress" << std::endl;
-      std::cout << "-s, --start_time Skip messages earlier than start time (HH:MM) 24hr" << std::endl;
-      std::cout << "-e, --end_time Skip messages later than end time" << std::endl;
+      std::cout << "-s, --start_time Skip messages earlier than start time (Y-m-d-H:M:S) UTC" << std::endl;
+      std::cout << "-e, --end_time Skip messages later than end time (Y-m-d-H:M:S) UTC" << std::endl;
       std::cout << "-h, --help Display this message" << std::endl;
       return -1;
     }
-    if (strcmp(*pargv,"-o") == 0)
+    if (std::string(*pargv) == "-o")
     {
       pargv++;
       out_name = *pargv;
       arg_count = arg_count + 2;
     }
-    if (strcmp(*pargv,"-c") == 0)
+    if (std::string(*pargv) == "-c")
     {
       pargv++;
-      compression = *pargv;
+      std::string compression_string = *pargv;
+      if (compression_string == "lz4")
+      {
+        compression = rosbag::CompressionType::LZ4;
+      }
+      if (compression_string == "bz2")
+      {
+        compression = rosbag::CompressionType::BZ2;
+      }
+      if (compression_string == "none")
+      {
+        compression = rosbag::CompressionType::Uncompressed;
+      }
       arg_count = arg_count + 2;
     }
-    if (strcmp(*pargv,"-p") == 0)
+    if (std::string(*pargv) == "-p")
     {
-     progress = true;
-     arg_count++;
+      progress = true;
+      arg_count++;
     }
-    if (strcmp(*pargv,"-s") == 0)
+    if (std::string(*pargv) == "-s")
     {
-     pargv++;
-     start = removeColon(*pargv);
-     arg_count = arg_count + 2;
+      pargv++;
+      arg_count = arg_count + 2;
+      struct tm tm;
+      strptime(*pargv, "%Y-%m-%d-%H:%M:%S",&tm);
+      time_t start_time = mktime(&tm);
+      start = ros::Time(start_time);
+      if (progress == true)
+      {
+        std::cout << "[INFO] Merging with start time: " << start_time << std::endl;
+      }
     }
-    if (strcmp(*pargv,"-e") == 0)
+    if (std::string(*pargv) == "-e")
     {
-     pargv++;
-     end = removeColon(*pargv);
-     arg_count = arg_count + 2;
+      pargv++;
+      arg_count = arg_count + 2;
+      struct tm tm;
+      strptime(*pargv, "%Y-%m-%d-%H:%M:%S",&tm);
+      time_t end_time = mktime(&tm);
+      if (progress == true)
+      {
+        std::cout << "[INFO] Merging with start time: " << end_time << std::endl;
+      }
     }
   }
   rosbag::Bag outbag;
   outbag.open(out_name, rosbag::bagmode::Write);
-  if(strcmp(const_cast<char*>(compression.c_str()),"none") == 0)
-  {
-  outbag.setCompression(rosbag::CompressionType::Uncompressed);
-  }
-  if(strcmp(const_cast<char*>(compression.c_str()),"bz2") == 0)
-  {
-  outbag.setCompression(rosbag::CompressionType::BZ2);
-  }
-  if(strcmp(const_cast<char*>(compression.c_str()),"lz4") == 0)
-  {
-  outbag.setCompression(rosbag::CompressionType::LZ4);
-  }
+  outbag.setCompression(compression);
   int size = 0;
   rosbag::View merged_view(true);
   std::vector<std::shared_ptr<rosbag::Bag> > bags;
   for(int i = arg_count; i < argc; i++)
-  {
+  { 
     if (progress == true)
     {
-    std::cout << "[PROG] Opening bag " << argv[i] <<std::endl;
+    std::cout << "[INFO] Opening bag " << argv[i] <<std::endl;
     }
     std::ifstream test(argv[i]); 
     if (!test)
@@ -120,20 +115,23 @@ int main(int argc, char *argv[])
     }
     bags.push_back(std::shared_ptr<rosbag::Bag>(new rosbag::Bag));
     bags.back()->open(argv[i], rosbag::bagmode::Read);
-    merged_view.addQuery(*bags.back());
+    merged_view.addQuery(*bags.back(),start,end);
+    //double secs =ros::Time::now().toSec();
+    //std::cout << secs << std::endl;
   }
   if(progress == true)
   {
     size = merged_view.size();
     std::vector<const rosbag::ConnectionInfo *> connection_infos = merged_view.getConnections();
     std::set<std::string> topics;
-    BOOST_FOREACH(const rosbag::ConnectionInfo *info, connection_infos) {
+    for(const rosbag::ConnectionInfo* info: connection_infos) 
+    {
     topics.insert(info->topic);
     }
     std::cout << "Merging topics: " << std::endl;
-    for (auto it = topics.begin(); it != topics.end(); ++it)
+    for (auto it: topics)
     {
-        std::cout << ' ' << *it << std::endl;
+      std::cout << ' ' << it << std::endl;
     }
 
   }
@@ -144,11 +142,7 @@ int main(int argc, char *argv[])
     {
       bar.update();
     }
-    int time = removeColon(stampToString(m.getTime()));
-    if( time > start && time < end )
-    {
       outbag.write(m.getTopic(), m.getTime(), m, m.getConnectionHeader());
-    }
   }
   std::cout << std::endl;
   return 0;
