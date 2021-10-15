@@ -89,9 +89,10 @@ int main(int argc, char *argv[])
       struct tm tm;
       strptime(*pargv, "%Y-%m-%d-%H:%M:%S",&tm);
       time_t end_time = mktime(&tm);
+      end = ros::Time(end_time);
       if (progress == true)
       {
-        std::cout << "[INFO] Merging with start time: " << end_time << std::endl;
+        std::cout << "[INFO] Merging with end time: " << end_time << std::endl;
       }
     }
   }
