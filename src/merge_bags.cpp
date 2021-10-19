@@ -14,23 +14,31 @@
 
 int main(int argc, char *argv[])
 {
-  //Defaults************************************
+//################ Defaults ###################
+
   std::string out_name = "out.bag";
-  rosbag::CompressionType compression = rosbag::CompressionType::LZ4 ;
+  std::string compression_string = "lz4";
   bool progress = false;
   ros::Time start = ros::TIME_MIN; 
   ros::Time end = ros::TIME_MAX;
-  //********************************************
+  
+//#############################################
 
-  int arg_count = 1;
-  if (argc < 2) 
+//################ Read in args ###################
+
+  std::vector<std::string> arguments(argv+1,argv+argc);
+
+  if (arguments.empty()) 
   {
     std::cout << "[ERROR]: No args, -h for help"<< std::endl;
     return -1;
   }
-  for (char **pargv = argv+1; *pargv != argv[argc]; pargv++) 
+  
+  std::vector<std::string> bagfile_names;
+
+  for (auto arg = arguments.begin(); arg != arguments.end();arg++) 
   {
-    if (strcmp(*pargv,"-h") == 0)
+    if (*arg == "-h")
     {
       std::cout << "-o, --output Output bag file name" << std::endl;
       std::cout << "-c, --compression Compression format: none, lz4 or bz2 (default lz4)" << std::endl;
@@ -40,41 +48,27 @@ int main(int argc, char *argv[])
       std::cout << "-h, --help Display this message" << std::endl;
       return -1;
     }
-    if (std::string(*pargv) == "-o")
+    else if (*arg == "-o")
     {
-      pargv++;
-      out_name = *pargv;
-      arg_count = arg_count + 2;
+      arg++;
+      out_name = *arg;
     }
-    if (std::string(*pargv) == "-c")
+    else if (*arg == "-c")
     {
-      pargv++;
-      std::string compression_string = *pargv;
-      if (compression_string == "lz4")
-      {
-        compression = rosbag::CompressionType::LZ4;
-      }
-      if (compression_string == "bz2")
-      {
-        compression = rosbag::CompressionType::BZ2;
-      }
-      if (compression_string == "none")
-      {
-        compression = rosbag::CompressionType::Uncompressed;
-      }
-      arg_count = arg_count + 2;
+      arg++;
+      compression_string = *arg;
     }
-    if (std::string(*pargv) == "-p")
+    else if (*arg == "-p")
     {
       progress = true;
-      arg_count++;
     }
-    if (std::string(*pargv) == "-s")
+    else if (*arg == "-s")
     {
-      pargv++;
-      arg_count = arg_count + 2;
+      arg++;
       struct tm tm;
-      strptime(*pargv, "%Y-%m-%d-%H:%M:%S",&tm);
+      std::string c = *arg;
+      const char * strpt = c.c_str();
+      strptime(strpt, "%Y-%m-%d-%H:%M:%S",&tm);
       time_t start_time = mktime(&tm);
       start = ros::Time(start_time);
       if (progress == true)
@@ -82,12 +76,13 @@ int main(int argc, char *argv[])
         std::cout << "[INFO] Merging with start time: " << start_time << std::endl;
       }
     }
-    if (std::string(*pargv) == "-e")
+    else if (*arg == "-e")
     {
-      pargv++;
-      arg_count = arg_count + 2;
+      arg++;
       struct tm tm;
-      strptime(*pargv, "%Y-%m-%d-%H:%M:%S",&tm);
+      std::string c = *arg;
+      const char * strpt = c.c_str();
+      strptime(strpt, "%Y-%m-%d-%H:%M:%S",&tm);
       time_t end_time = mktime(&tm);
       end = ros::Time(end_time);
       if (progress == true)
@@ -95,47 +90,92 @@ int main(int argc, char *argv[])
         std::cout << "[INFO] Merging with end time: " << end_time << std::endl;
       }
     }
+
+//################ Read in all non-args as paths to bags ###################
+
+    else
+    {
+      std::ifstream test(*arg); 
+      if (!test)
+      {
+        std::cout << "[ERROR] File or path doesn't exist: " << *arg << std::endl;
+        return -1;
+      }
+      else
+      {
+        bagfile_names.push_back(*arg);
+      }
+    }
   }
+
+//################ Adjust settings based on args / defaults ###################
+
+  rosbag::CompressionType compression;
+  if (compression_string == "lz4")
+  {
+    compression = rosbag::CompressionType::LZ4;
+    if( progress == true)
+    {
+      std::cout << "[INFO] Compression set to LZ4" << std::endl;
+    }
+  }
+  if (compression_string == "bz2")
+  {
+    compression = rosbag::CompressionType::BZ2;
+    if( progress == true)
+    {
+      std::cout << "[INFO] Compression set to BZ2" << std::endl;
+    }
+  }
+  if (compression_string == "none")
+  {
+    compression = rosbag::CompressionType::Uncompressed;
+    if( progress == true)
+    {
+      std::cout << "[INFO] Compression set to none" << std::endl;
+    }
+  }
+
+//################ Add relevant rosbags to view ###################
+
   rosbag::Bag outbag;
   outbag.open(out_name, rosbag::bagmode::Write);
   outbag.setCompression(compression);
   int size = 0;
   rosbag::View merged_view(true);
   std::vector<std::shared_ptr<rosbag::Bag> > bags;
-  for(int i = arg_count; i < argc; i++)
+  for(auto arg = bagfile_names.begin(); arg != bagfile_names.end();arg++)
   { 
     if (progress == true)
     {
-    std::cout << "[INFO] Opening bag " << argv[i] <<std::endl;
-    }
-    std::ifstream test(argv[i]); 
-    if (!test)
-    {
-      std::cout << "[ERROR] File or path doesn't exist: " << argv[i] << std::endl;
-      return -1;
+    std::cout << "[INFO] Opening bag " << *arg <<std::endl;
     }
     bags.push_back(std::shared_ptr<rosbag::Bag>(new rosbag::Bag));
-    bags.back()->open(argv[i], rosbag::bagmode::Read);
+    bags.back()->open(*arg, rosbag::bagmode::Read);
     merged_view.addQuery(*bags.back(),start,end);
-    //double secs =ros::Time::now().toSec();
-    //std::cout << secs << std::endl;
   }
-  if(progress == true)
+  
+//################ Review all topics in view ###################
+
+  size = merged_view.size();
+  std::vector<const rosbag::ConnectionInfo *> connection_infos = merged_view.getConnections();
+  std::set<std::string> topics;
+  for(const rosbag::ConnectionInfo* info: connection_infos) 
   {
-    size = merged_view.size();
-    std::vector<const rosbag::ConnectionInfo *> connection_infos = merged_view.getConnections();
-    std::set<std::string> topics;
-    for(const rosbag::ConnectionInfo* info: connection_infos) 
-    {
-    topics.insert(info->topic);
-    }
+  topics.insert(info->topic);
+  }
+
+  if (progress == true)
+  {
     std::cout << "Merging topics: " << std::endl;
     for (auto it: topics)
     {
       std::cout << ' ' << it << std::endl;
     }
-
   }
+ 
+//################ Write view to output bag ###################
+
   progressbar bar(size);
   for(rosbag::MessageInstance const m: merged_view)
   {
