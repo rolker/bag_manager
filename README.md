@@ -15,3 +15,4 @@ This example will create an lz4 compressed bagfile named out.bag, containing all
 
 ### Future Changes:
 - Merge_bags filter by data type
+- Filter by topic
