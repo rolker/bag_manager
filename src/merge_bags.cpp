@@ -10,7 +10,14 @@
 // -p, --progress Display progress
 // -s, --start_time Skip messages earlier than start time
 // -e, --end_time Skip messages later than end time
+// -x, --exclude Exclude a topic, may be repeated
 // -h, --help Display this message
+
+std::map<std::string, bool> exclude_map;
+bool checkExclude(const rosbag::ConnectionInfo* info)
+{
+  return !exclude_map[info->topic];
+}
 
 int main(int argc, char *argv[])
 {
@@ -45,6 +52,7 @@ int main(int argc, char *argv[])
       std::cout << "-p, --progress Display progress" << std::endl;
       std::cout << "-s, --start_time Skip messages earlier than start time (Y-m-d-H:M:S) UTC" << std::endl;
       std::cout << "-e, --end_time Skip messages later than end time (Y-m-d-H:M:S) UTC" << std::endl;
+      std::cout << "-x, --exclude Exclude a topic, may be repeated" << std::endl;
       std::cout << "-h, --help Display this message" << std::endl;
       return -1;
     }
@@ -90,6 +98,12 @@ int main(int argc, char *argv[])
         std::cout << "[INFO] Merging with end time: " << end_time << std::endl;
       }
     }
+    else if (*arg == "-x")
+    {
+      arg++;
+      exclude_map[*arg] = true;
+    }
+
 
 //################ Read in all non-args as paths to bags ###################
 
@@ -152,7 +166,7 @@ int main(int argc, char *argv[])
     }
     bags.push_back(std::shared_ptr<rosbag::Bag>(new rosbag::Bag));
     bags.back()->open(*arg, rosbag::bagmode::Read);
-    merged_view.addQuery(*bags.back(),start,end);
+    merged_view.addQuery(*bags.back(), &checkExclude, start,end);
   }
   
 //################ Review all topics in view ###################
