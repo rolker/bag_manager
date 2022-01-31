@@ -7,12 +7,13 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rosbag
+  tf2_msgs
 )
 
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES 
-  CATKIN_DEPENDS roscpp rosbag
+  CATKIN_DEPENDS roscpp rosbag tf2_msgs
 #  DEPENDS system_lib
 )
 
@@ -29,11 +30,19 @@ target_link_libraries(merge_bags
     ${catkin_LIBRARIES}
 )
 
- install(TARGETS merge_bags
-   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
+add_executable(bag_dedupe_tf src/bag_dedupe_tf.cpp)
+add_dependencies(bag_dedupe_tf ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(bag_dedupe_tf
+    ${catkin_LIBRARIES}
+)
+
+
+install(TARGETS merge_bags bag_dedupe_tf
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
