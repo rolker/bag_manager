@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     rosbag::View view(true);
     view.addQuery(inbag);
     
-    std::map<ros::StringPair, ros::Time> last_tf_written;
+    std::map<ros::StringPair, std::map<ros::Time, bool> > last_tf_written;
 
     progressbar bar(view.size());
 
@@ -139,7 +139,8 @@ int main(int argc, char *argv[])
           {
             for (auto tf: tf_msg->transforms)
             {
-              if(tf.header.stamp == last_tf_written[std::make_pair(tf.header.frame_id, tf.child_frame_id)])
+              auto key = std::make_pair(tf.header.frame_id, tf.child_frame_id);
+              if(last_tf_written[key][tf.header.stamp])
               {
                 dupe = true;
                 break;
@@ -148,7 +149,13 @@ int main(int argc, char *argv[])
             if(dupe)
               continue;
             for (auto tf: tf_msg->transforms)
-              last_tf_written[std::make_pair(tf.header.frame_id, tf.child_frame_id)] = tf.header.stamp;
+            {
+              auto key = std::make_pair(tf.header.frame_id, tf.child_frame_id);
+              last_tf_written[key][tf.header.stamp] = true;
+              while(last_tf_written[key].size()>20)
+                  last_tf_written[key].erase(last_tf_written[key].begin()->first);
+            }
+
           }
           else
             std::cerr << "[Warning] Could not extract TFMessage from /tf topic" << std::endl;
