@@ -1,4 +1,4 @@
-# BAG PRO
+# BAG Manager
 
 1. [ bag_merge ](#bag_merge)
 2. [ msgext ](#msgext)
