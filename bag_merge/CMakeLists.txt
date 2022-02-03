@@ -21,15 +21,15 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}_merge_bags src/merge_bags.cpp)
+add_executable(merge_bags src/merge_bags.cpp)
 
-add_dependencies(${PROJECT_NAME}_merge_bags ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(merge_bags ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME}_merge_bags
+target_link_libraries(merge_bags
     ${catkin_LIBRARIES}
 )
 
- install(TARGETS ${PROJECT_NAME}_merge_bags
+ install(TARGETS merge_bags
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

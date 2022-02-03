@@ -284,7 +284,10 @@ int main(int argc, char *argv[])
 
     bags.push_back(std::shared_ptr<rosbag::Bag>(new rosbag::Bag));
     bags.back()->open(*arg, rosbag::bagmode::Read);
-    merged_view.addQuery(*bags.back(),&checkExclude,start,end);
+    if(exclude_map.empty() && include_map.empty()) // don't add a filter if we don't need it
+      merged_view.addQuery(*bags.back(), start, end);
+    else
+      merged_view.addQuery(*bags.back(), &checkExclude, start, end);
   
   }
   
