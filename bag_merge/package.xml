@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>bag_manager</name>
+  <name>bag_merge</name>
   <version>0.0.0</version>
   <description>Tools for working with ROS bag files</description>
 
-  <maintainer email="roland@ccom.unh.edu">Roland Arsenault</maintainer>
+  <maintainer email="Avery.Munoz@unh.edu">Avery Munoz</maintainer>
 
 
   <license>BSD</license>
