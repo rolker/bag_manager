@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>bag_merge</name>
+  <name>bag_manager</name>
   <version>0.0.0</version>
   <description>Tools for working with ROS bag files</description>
 
@@ -13,6 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>rosbag</depend>
+   <depend>tf2_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

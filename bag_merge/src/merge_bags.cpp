@@ -319,7 +319,14 @@ int main(int argc, char *argv[])
     {
       bar.update();
     }
+    try
+    {
       outbag.write(m.getTopic(), m.getTime(), m, m.getConnectionHeader());
+    }
+    catch (const std::exception& e)
+    {
+      std::cerr << "Exception while writing: " << e.what() << std::endl;
+    }
   }
   std::cout << std::endl;
   return 0;
