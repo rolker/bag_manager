@@ -1,4 +1,12 @@
+#Files to ignore:
 .vscode/settings.json
 .vscode/tasks.json
-/build
 .vscode/tasks
+CMakeCache.txt
+*.egg-info/
+
+#Dir to ignore:
+build/
+dist/
+
+

@@ -19,10 +19,11 @@ catkin_package(
 
 include_directories(
   include
+  bag_merge/include
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(merge_bags src/merge_bags.cpp)
+add_executable(merge_bags bag_merge/src/merge_bags.cpp)
 
 add_dependencies(merge_bags ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
@@ -30,7 +31,7 @@ target_link_libraries(merge_bags
     ${catkin_LIBRARIES}
 )
 
-add_executable(bag_dedupe_tf src/bag_dedupe_tf.cpp)
+add_executable(bag_dedupe_tf bag_dedupe_tf/src/bag_dedupe_tf.cpp)
 add_dependencies(bag_dedupe_tf ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(bag_dedupe_tf

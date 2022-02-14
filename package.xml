@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>Tools for working with ROS bag files</description>
 
-  <maintainer email="roland@ccom.unh.edu">Roland Arsenault</maintainer>
+  <maintainer email="Avery.Munoz@unh.edu">Avery Munoz</maintainer>
 
 
   <license>BSD</license>
