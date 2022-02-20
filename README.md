@@ -21,7 +21,7 @@ This is a running list of the scripts, along with some info of what they're for,
 Bag_merge was created to simply combine multiple bag files into one at a reasonable speed. This is because in many applications bag files are given time or size caps and are split into multiple bag files. When analyzing bag files after an operation/deployment/test it is often very useful to be able to see data that spans across multiple bag files. 
 This has been done in python before, however when merging large bags it can be quite slow in python.
 
-##### Installation
+## Installation
 Bag_merge is structured to be a ROS package as it was originally intended to be run on vehicle to streamline ROS bag export, its only been testing with noetic on Ubuntu 20.04. 
 If you're merging bag files, chances are you have a ROS worksapce setup but in the chance you don't heres a guide: http://wiki.ros.org/noetic/Installation
 1. `git clone https://github.com/munzz11/bag_pro.git` into an existing ROS workspace
@@ -29,7 +29,7 @@ If you're merging bag files, chances are you have a ROS worksapce setup but in t
 3. Add to path if you want to call from elsewhere. Example: (`export PATH=$PATH:~/project11/catkin_ws/devel/lib/bag_manager/`)
 4. Run with `merge_bags` or `./merge_bags`
 
-##### Arguments 
+### Arguments 
 `-o, --output Output bag file name`<br />
 `-c, --compression Compression format: none, lz4 or bz2 (default lz4)`<br />
 `-p, --progress Display progress`<br />
@@ -37,12 +37,15 @@ If you're merging bag files, chances are you have a ROS worksapce setup but in t
 `-e, --end_time Skip messages later than end time (Y-m-d-H:M:S) (local time`<br />
 `-x, --exclude Exclude a topic, may be repeated`<br />
 `-i, --include Ixclude a topic, may be repeated`<br />
+`-dx, --exclude Exclude any topic with the given data type, may be repeated`<br />
+`-di, --include Include any topic with the given data type, may be repeated`<br />
 `-t, --topic Topic filtering config file`<br />
+`-d, --default Default include or exclude, MUST be used when compunding includes and excludes present` <br />
 `-h, --help Display this message`<br />
 
 You could probably compile and run this outside of a ROS workspace with the necessary rosdeps  `¯\_(ツ)_/¯`
 
-##### Demo
+### Demo
 ![Alt Text](https://i.ibb.co/tYWq8qv/merge-bag-example.gif)
 
 <a name="#msgext"></a>
@@ -50,13 +53,13 @@ You could probably compile and run this outside of a ROS workspace with the nece
 # msgext
 This tool was created to extract the the .msg definitions from a ROS .bag file. Custom message definitions are somewhat common in ROS, but if you are doing post processing or working on a subsystem of someone elses roscore, you may not always have the custom definitions to compile in your workspace, this tools intends to automate extracting message definitions from a rosbag building a rudimentary workspace with all the message definitions from the bag file.
 
-##### Installation 
+### Installation 
 This script is *not* a ros package. Install via:
 1. `git clone https://github.com/munzz11/bag_pro.git` 
 2. `cd bag_pro`
 3. `sudo python3 setup.py install`
 
-##### Arguments
+### Arguments
 `usage: msgext [-h] [-v] [-w] [-n N] bag [bag ...]`<br />
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Read, analyze and build temp workspaces containing .msg definitions from a ROS .bag file`<br />
@@ -70,5 +73,8 @@ This script is *not* a ros package. Install via:
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`-w          Workspace mode, automatically generates a ROS workspace containing msg definitions (default: False)`<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`-n N        Name of workspace folder, default is 'workspace' (default: None)`<br />
 
-##### Demo
+## Demo
 ![Alt Text](https://i.ibb.co/gySYXmV/msgext-example.gif)
+
+# bag_dedupe_tf
+
