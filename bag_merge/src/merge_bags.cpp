@@ -11,6 +11,7 @@
 // -p, --progress Display progress
 // -s, --start_time Skip messages earlier than start time
 // -e, --end_time Skip messages later than end time
+// -x, --exclude Exclude a topic, may be repeated
 // -h, --help Display this message
 
 std::map<std::string, bool> exclude_map;
@@ -70,6 +71,27 @@ bool checkExclude(const rosbag::ConnectionInfo* info)
     }
   }
 }
+
+ros::Time parseTime(std::string c)
+{
+  try
+  {
+    std::size_t size_decoded = 0;
+    ros::Time ret(std::stod(c, &size_decoded));
+    if(size_decoded == c.size())
+      return ret;
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr << e.what() << '\n';
+  }
+  struct tm tm;
+  const char * strpt = c.c_str();
+  strptime(strpt, "%Y-%m-%d-%H:%M:%S",&tm);
+  time_t start_time = mktime(&tm);
+  return ros::Time(start_time);
+}
+
 int main(int argc, char *argv[])
 {
 //################ Defaults ###################
@@ -131,29 +153,19 @@ int main(int argc, char *argv[])
     else if (*arg == "-s")
     {
       arg++;
-      struct tm tm;
-      std::string c = *arg;
-      const char * strpt = c.c_str();
-      strptime(strpt, "%Y-%m-%d-%H:%M:%S",&tm);
-      time_t start_time = mktime(&tm);
-      start = ros::Time(start_time);
+      start = parseTime(*arg);
       if (progress == true)
       {
-        std::cout << "[INFO] Merging with start time: " << start_time << std::endl;
+        std::cout << "[INFO] Merging with start time: " << std::fixed << start.toSec() << std::endl;
       }
     }
     else if (*arg == "-e")
     {
       arg++;
-      struct tm tm;
-      std::string c = *arg;
-      const char * strpt = c.c_str();
-      strptime(strpt, "%Y-%m-%d-%H:%M:%S",&tm);
-      time_t end_time = mktime(&tm);
-      end = ros::Time(end_time);
+      end = parseTime(*arg);
       if (progress == true)
       {
-        std::cout << "[INFO] Merging with end time: " << end_time << std::endl;
+        std::cout << "[INFO] Merging with end time: " << std::fixed << end.toSec() << std::endl;
       }
     }
      else if (*arg == "-i")
