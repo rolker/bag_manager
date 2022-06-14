@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
           {
             for (auto tf: tf_msg->transforms)
             {
-              if(tf.header.stamp == last_tf_written[std::make_pair(tf.header.frame_id, tf.child_frame_id)])
+              if(tf.header.stamp <= last_tf_written[std::make_pair(tf.header.frame_id, tf.child_frame_id)])
               {
                 dupe = true;
                 break;
